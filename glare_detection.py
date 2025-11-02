@@ -73,11 +73,18 @@ def detect_glare(
     coverage = np.count_nonzero(mask) / float(H * W)
     has_glare = coverage >= coverage_thresh
 
+    # Find the center of the glare?
+    gray = cv2.cvtColor(bgr, cv2.COLOR_BGR2GRAY)
+    _, _, _, maxLoc = cv2.minMaxLoc(gray)   # (x, y)
+    print("Glare center (px):", maxLoc)
+
+
     return {
         'score': coverage,
         'has_glare': has_glare,
         'score_map': score_map,
-        'mask': mask
+        'mask': mask,
+        'X_coord' : maxLoc
     }
 
 res = detect_glare(bgr)
@@ -86,3 +93,5 @@ print("Has glare:", res['has_glare'])
 print("Glare coverage:", f"{res['score']:.4f}")
 
 
+# Edit this code to get the center coordinate for the glare blob, so that it can be used in moving the camera
+# Also output the image that was extracted to put into the camera move function
