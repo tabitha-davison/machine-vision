@@ -9,35 +9,30 @@ def detect_glare(
     score_thresh=0.65,            # pixel-level threshold for glare-like
     coverage_thresh=0.02          # fraction of image area to call “glare”
 ):
-    """
-    Returns:
-        {'score': float, 'has_glare': bool, 'mask': uint8 HxW}
-        If input frame is invalid, returns {'score':0.0,'has_glare':False,'mask':zeros}
-    """
-    # ---- Guard rails for webcam frames ----
+
     if bgr is None or bgr.size == 0:
         return {'score': 0.0, 'has_glare': False, 'mask': np.zeros((1,1), np.uint8)}
 
-    if len(bgr.shape) == 2:               # grayscale → make 3-channel
+    if len(bgr.shape) == 2: # grayscale 
         bgr = cv2.cvtColor(bgr, cv2.COLOR_GRAY2BGR)
 
     H, W = bgr.shape[:2]
     if H == 0 or W == 0:
         return {'score': 0.0, 'has_glare': False, 'mask': np.zeros((1,1), np.uint8)}
 
-    # Convert to HSV
+    # Convert photo to HSV (hue, saturation, value)
     hsv = cv2.cvtColor(bgr, cv2.COLOR_BGR2HSV)
     _, S, V = cv2.split(hsv)
-    V = V.astype(np.float32) / 255.0
-    S = S.astype(np.float32) / 255.0
+    V = V.astype(np.float32) / 255.0 # Illuminance
+    S = S.astype(np.float32) / 255.0 # Saturation
 
-    # Local contrast of brightness channel
+    # Local contrast mapping on illuminance (V)
     k = (win, win)
     mean_V  = cv2.boxFilter(V, -1, k, normalize=True, borderType=cv2.BORDER_REFLECT)
     mean_V2 = cv2.boxFilter(V*V, -1, k, normalize=True, borderType=cv2.BORDER_REFLECT)
     std_V   = np.sqrt(np.maximum(mean_V2 - mean_V*mean_V, 0.0))
 
-    # Normalize (robust to flat images)
+    # Normalize 
     def robust_norm(x, p_lo=2.0, p_hi=98.0, eps=1e-6):
         lo = np.percentile(x, p_lo); hi = np.percentile(x, p_hi)
         if hi - lo < eps:   # avoid divide-by-zero on flat images
@@ -52,6 +47,7 @@ def detect_glare(
     low_saturation_like = 1.0 - S_norm
     low_contrast_like   = 1.0 - C_norm
 
+    # Combine the scores and weights for all the 3 methods to get overall score
     wI, wS, wC = weights
     score_map = (wI*intensity_like + wS*low_saturation_like + wC*low_contrast_like) / (wI+wS+wC)
 
@@ -60,7 +56,6 @@ def detect_glare(
     _, _, _, maxLoc = cv2.minMaxLoc(gray)   # (x, y)
     instr = get_move_instruction(maxLoc, gray.shape)
     print(instr)
-
 
     # Threshold to get glare mask
     mask = (score_map >= score_thresh).astype(np.uint8) * 255
