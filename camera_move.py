@@ -1,13 +1,43 @@
+import cv2
+import time
+from glare_detection import detect_glare
 
-import cv2 as cv2
-import numpy as np
+def camera_move():
+    cap = cv2.VideoCapture(0)
+    if not cap.isOpened():
+        print("Could not open webcam.")
+        return
 
-"For this function, we need to use the angle of reflection formula and make sure that the angle of the raw of light and the phone angle are not parallel"
-"Can also pretend that we have a polarizing filter, so we can achieve Brewster's angle of perfect polarization"
+    print("Running. Press 'q' in the window to quit (or Ctrl+C if headless).")
+    last = 0.0
+    use_window = True   # try GUI once
 
-def camera_move(X_coord, S, ):
+    try:
+        while True:
+            ok, frame = cap.read()
+            if not ok:
+                print("Failed to grab frame.")
+                break
 
-"X-coordinate is the x,y for the center of the glare blob "
+            if time.time() - last >= 1.0:
+                last = time.time()
+                res = detect_glare(frame)
+                print(f"Has glare: {res['has_glare']} | coverage: {res['score']:.4f}")
 
-X = X_coord
+            if use_window:
+                try:
+                    cv2.imshow("Webcam (q to quit)", frame)
+                    if cv2.waitKey(1) & 0xFF == ord('q'):
+                        break
+                except cv2.error as e:
+                    print("No GUI backend available; switching to headless mode.")
+                    use_window = False
 
+    except KeyboardInterrupt:
+        print("\nStopping…")
+    finally:
+        cap.release()
+        if use_window:
+            cv2.destroyAllWindows()
+
+camera_move()
