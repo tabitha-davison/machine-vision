@@ -6,28 +6,32 @@ import os
 
 def screen_detection(image):
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    # plt.figure(figsize=(10, 8))
+    # plt.imshow(gray, cmap="gray")
+    # plt.axis("off")
+    # plt.show()
+
     blur = cv2.bilateralFilter(cv2.equalizeHist(gray), 9, 75, 75)
+    # plt.figure(figsize=(10, 8))
+    # plt.imshow(blur, cmap="gray")
+    # plt.axis("off")
+    # plt.show()
 
     mask = cv2.inRange(blur, 0, 50)
+    # plt.figure(figsize=(10, 8))
+    # plt.imshow(mask, cmap="gray")
+    # plt.axis("off")
+    # plt.show()
 
-    num_labels, labels, stats, _ = cv2.connectedComponentsWithStats(
-        mask, connectivity=8
-    )
-    h, w = mask.shape
-    clean_mask = np.zeros_like(mask)
-    for i in range(1, num_labels):
-        area = stats[i, cv2.CC_STAT_AREA]
-        if 100 < area < 0.9 * h * w:
-            clean_mask[labels == i] = 255
+    edges = cv2.Canny(mask, 50, 150)
+    # plt.figure(figsize=(10, 8))
+    # plt.imshow(edges, cmap="gray")
+    # plt.axis("off")
+    # plt.show()
 
-    masked_clean = cv2.bitwise_and(blur, blur, mask=clean_mask)
-
-    edges = cv2.Canny(masked_clean, 50, 150)
     edges_closed = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, np.ones((5, 5), np.uint8))
-
     # plt.figure(figsize=(10, 8))
     # plt.imshow(edges_closed, cmap="gray")
-    # plt.title("Edges after preprocessing")
     # plt.axis("off")
     # plt.show()
 
@@ -37,6 +41,11 @@ def screen_detection(image):
 
     contour_vis = image.copy()
     cv2.drawContours(contour_vis, contours, -1, (0, 255, 0), 2)
+
+    # plt.figure(figsize=(10, 8))
+    # plt.imshow(contour_vis, cmap="gray")
+    # plt.axis("off")
+    # plt.show()
 
     target_ar = 1.78
     max_tilt = 30
