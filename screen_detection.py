@@ -152,5 +152,7 @@ def screen_detection(image):
         save_path = os.path.join(save_dir, "detected_screen.jpg")
         cv2.imwrite(save_path, warped)
         print(f"Saved cropped & aligned screen as '{save_path}'")
+        return True
     else:
         print("No screen detected.")
+        return False
