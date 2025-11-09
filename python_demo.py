@@ -1,100 +1,112 @@
-import cv2 as cv 
-import matplotlib.pyplot as plt
+import cv2
 import numpy as np
 
-img = cv.imread("./vision_test_intermediate.jpg")
-# show image
-# plt.imshow(img)
-# plt.show()
+img = cv2.imread('vision_test_noise.jpg')
 
-# show image in cv version
-# cv.imshow('image', img)
-# cv.waitKey(0)
-# cv.imwrite('image_thres1.jpg', img)
-# cv.destroyAllWindows()
+original_height, original_width = img.shape[:2]
 
-# resize 
-img_resized = cv.resize(img, (800, int(img.shape[0]*800/img.shape[1])))
+new_width = 800
+aspect_ratio = new_width / original_width
+new_height = int(original_height * aspect_ratio)
 
-# convert to grayscale
-img_gray = cv.cvtColor(img_resized, cv.COLOR_BGR2GRAY)
+img = cv2.resize(img, (new_width, new_height))
 
-# gaussian blur to remove noise
-blur = cv.blur(img,(5,5))
-blur_gaussian = cv.GaussianBlur(img,(51,51),0)
-# blur_bialteral = cv.bilateralFilter(img, 31,200,21) 
- 
-plt.subplot(131),plt.imshow(img),plt.title('Original')
-plt.xticks([]), plt.yticks([])
-plt.subplot(132),plt.imshow(blur),plt.title('Blurred')
-plt.xticks([]), plt.yticks([])
-plt.subplot(133),plt.imshow(blur_gaussian),plt.title('Blurred Gaussian')
-plt.xticks([]), plt.yticks([])
-plt.show()
+# grayscale image ------------------------------
+gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-# === 2. Skin detection (HSV mask) ===
-hsv = cv.cvtColor(img_resized, cv.COLOR_BGR2HSV)
+cv2.imshow('Grayscaled Image', gray)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
 
-# broad skin tone range, adjustable for lighting
-lower = np.array([0, 30, 60], dtype=np.uint8)
-upper = np.array([50, 180, 255], dtype=np.uint8)
-skin_mask = cv.inRange(hsv, lower, upper)
+# blur image ------------------------------
+blur = cv2.bilateralFilter(gray, 9, 75, 75)  # or GaussianBlur
 
-# clean mask with morphological ops
-kernel = cv.getStructuringElement(cv.MORPH_ELLIPSE, (7,7))
-skin_mask = cv.morphologyEx(skin_mask, cv.MORPH_CLOSE, kernel, iterations=2)
-skin_mask = cv.morphologyEx(skin_mask, cv.MORPH_OPEN, kernel, iterations=2)
+cv2.imshow('Blurred Image', blur)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
 
-cv.imshow("2. Skin Mask", skin_mask)
-cv.waitKey(0)
+# detect skin and remove it from edge search ------------------------------
+ycrcb = cv2.cvtColor(img, cv2.COLOR_BGR2YCrCb)
+skin_mask = cv2.inRange(ycrcb, (0,133,77), (255,173,127))
+blur[skin_mask > 0] = 0
 
-# === 3. Edge detection with skin suppression ===
-edges = cv.Canny(img_gray, 50, 150)
-edges[skin_mask > 0] = 0  # remove edges inside skin regions
+cv2.imshow('Skin mask on phone', blur)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
 
-cv.imshow("3. Canny Edges (Skin Suppressed)", edges)
-cv.waitKey(0)
+# detect edge ------------------------------------------------------------
+edges = cv2.Canny(gray, 100, 200)
 
-# Canny edge detection
-edges = cv.Canny(blur, threshold1=50, threshold2=150)
-edges_test = cv.Canny(blur_gaussian, threshold1=50, threshold2=150)
-edges_bil = cv.Canny(blur, threshold1=50, threshold2=150)
+cv2.imshow('Edges on Phone', edges)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
 
-f = plt.figure(figsize=(20,6))
-ax = f.add_subplot(131)
-ax2 = f.add_subplot(132)
-ax3 = f.add_subplot(133)
-ax.imshow(blur, cmap="gray")
-ax2.imshow(edges, cmap="gray")
-ax3.imshow(edges_test, cmap="gray")
-plt.show()
+# Morphological closing to connect phone edges --------------------------------------------------
+kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5,5))
+closed = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, kernel)
 
-# find contours
-contours, hierarchy = cv.findContours(image=edges, mode=cv.RETR_EXTERNAL, method=cv.CHAIN_APPROX_NONE)
+cv2.imshow('Morphological Closed Edge on Phone', edges)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
 
-# draw contours on og image
-image_copy = img.copy()
-cv.drawContours(image=image_copy, contours=contours, contourIdx=-1, color=(0, 255, 0), thickness=2, lineType=cv.LINE_AA)
-plt.imshow(image_copy)
-plt.show()
+# find contour ------------------------------------------------------------
+contours, _ = cv2.findContours(closed, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-# find contour corners
-candidates = []
+img_contour_copy = img.copy()
+
+cv2.drawContours(img_contour_copy, contours, -1, (0,255,0), 3) # draw green contours
+
+print(f'Number of contours detected: {len(contours)}')
+
+cv2.imshow('Detected Contours', img_contour_copy)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
+
+# filter out small sizes in contours ------------------------------------------------------------
+# can change to optimize in one loop later
+
+# filter out small buttons and noisy contours
+filter_contours = []
 
 for cnt in contours:
-    peri = cv.arcLength(cnt, True)
-    approx = cv.approxPolyDP(cnt, 0.02 * peri, True)
+    area = cv2.contourArea(cnt)
+    if area > 5000: # arbitrary pixel area amount
+        filter_contours.append(cnt)
 
-    if len(approx) == 4 and cv.isContourConvex(approx):
-        area = cv.contourArea(approx)
-        if area > 2000:
-            x, y, w, h = cv.boundingRect(approx)
-            aspect_ratio = float(w)/h
-            if 1.3 < aspect_ratio < 2.5:
-                candidates.append(approx)
+print(f'Number of filtered contours: {len(filter_contours)}')
 
-overlay = img.copy()
-cv.drawContours(overlay, candidates, -1, (0,255,0), 2)
-plt.imshow(overlay)
-plt.show()
+img_filter_contours = img.copy()
+cv2.drawContours(img_filter_contours, filter_contours, -1, (0,255,0), 3)
+cv2.imshow('Filtered Contours by Size', img_filter_contours)
+cv2.waitKey(0)
+
+# loop through contours to find the phone screen ------------------------------------------------------------
+img_approx_copy = img.copy()
+img_detection_copy = img.copy()
+for cnt in filter_contours:
+    
+    print(f'Contour Perimeter: {cv2.arcLength(cnt, True) }')
+    epsilon = 0.02 * cv2.arcLength(cnt, True) # get contour perimeter
+    approx = cv2.approxPolyDP(cnt, epsilon, True) # get clean shape from approx
+
+    cv2.drawContours(img_approx_copy, [approx], -1, (0,255,0), 3)
+    
+    for point in approx: # draw vertice points
+        x, y = point[0]
+        cv2.circle(img_approx_copy, (x, y), 5, (0, 0, 255), -1)
+
+    cv2.imshow('Approximated Contour Shape', img_approx_copy)
+    cv2.waitKey(0)
+
+    # if len(approx) > 3 and cv2.isContourConvex(approx): 
+    if len(approx) > 3: # check convex polygons with at least 4 pts
+        x, y, w, h = cv2.boundingRect(approx)
+        # aspect = w / float(h)
+        # print(f"aspect ratio: {aspect}")
+        # if 0 < aspect < 1:  # check for phone aspect ratio
+        # cv2.drawContours(img_detection_copy, [approx], -1, (0,255,0), 3) # draw green contours
+        cv2.rectangle(img_detection_copy, (x, y), (x + w, y + h), (0, 255, 0), 2)
+
+cv2.imshow('Phone Detection', img_detection_copy)
+cv2.waitKey(0)
 
