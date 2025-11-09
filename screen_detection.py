@@ -40,7 +40,7 @@ def screen_detection(image):
 
     target_ar = 1.78
     max_tilt = 30
-    min_area = 1000
+    min_area = 3000
 
     best_screen = None
     min_ar_diff = float("inf")

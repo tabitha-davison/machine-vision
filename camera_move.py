@@ -1,6 +1,8 @@
 import cv2
 import time
 from glare_detection import detect_glare
+from screen_detection import screen_detection
+
 
 def camera_move():
     cap = cv2.VideoCapture(0)
@@ -10,7 +12,7 @@ def camera_move():
 
     print("Running. Press 'q' in the window to quit (or Ctrl+C if headless).")
     last = 0.0
-    use_window = True   # try GUI once
+    use_window = True  # try GUI once
 
     try:
         while True:
@@ -22,12 +24,13 @@ def camera_move():
             if time.time() - last >= 1.0:
                 last = time.time()
                 res = detect_glare(frame)
+                screen_detection(frame)
                 print(f"Has glare: {res['has_glare']} | coverage: {res['score']:.4f}")
 
             if use_window:
                 try:
                     cv2.imshow("Webcam (q to quit)", frame)
-                    if cv2.waitKey(1) & 0xFF == ord('q'):
+                    if cv2.waitKey(1) & 0xFF == ord("q"):
                         break
                 except cv2.error as e:
                     print("No GUI backend available; switching to headless mode.")
@@ -39,5 +42,6 @@ def camera_move():
         cap.release()
         if use_window:
             cv2.destroyAllWindows()
+
 
 camera_move()
