@@ -1,10 +1,11 @@
+from screen_detection import screen_detection
+from glare_detection import detect_glare
+from EasyOCR import easy_ocr
 import cv2
 import time
-from glare_detection import detect_glare
-from screen_detection import screen_detection
 
-
-def camera_move():
+# in loop, get screen then read
+def live_loop():
     cap = cv2.VideoCapture(0)
     if not cap.isOpened():
         print("Could not open webcam.")
@@ -20,13 +21,20 @@ def camera_move():
             if not ok:
                 print("Failed to grab frame.")
                 break
-            
+
             # screen and glare detection every 1 sec
             if time.time() - last >= 1.0:
                 last = time.time()
                 if screen_detection(frame):
                     res = detect_glare(frame)
                     print(f"Has glare: {res['has_glare']} | coverage: {res['score']:.4f}")
+
+                    # screen image 
+                    screen_image = cv2.imread("./saved_images/detected_screen.jpg")
+                    text = easy_ocr(screen_image)
+                    with open("output.txt", "w") as f:
+                        for line in text:
+                            f.write(line + "\n")
 
             # showing webcam feed
             if use_window:
@@ -45,5 +53,5 @@ def camera_move():
         if use_window:
             cv2.destroyAllWindows()
 
-
-# camera_move()
+if __name__ == '__main__':
+    live_loop()
