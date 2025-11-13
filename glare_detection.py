@@ -9,6 +9,17 @@ def detect_glare(
     score_thresh=0.65,            # pixel-level threshold for glare-like
     coverage_thresh=0.02          # fraction of image area to call “glare”
 ):
+    """
+    Detect glare in a BGR image by combining intensity, saturation, and local-
+    contrast maps. Produces a score map, binary glare mask, and overall glare
+    coverage. Also identifies the brightest point and prints a suggested phone
+    movement via `get_move_instruction()`.
+
+    Returns a dict with:
+      - 'score': fraction of pixels flagged as glare
+      - 'has_glare': whether glare exceeds the coverage threshold
+      - 'mask': binary uint8 glare mask
+    """
 
     if bgr is None or bgr.size == 0:
         return {'score': 0.0, 'has_glare': False, 'mask': np.zeros((1,1), np.uint8)}

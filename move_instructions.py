@@ -1,6 +1,12 @@
 def get_move_instruction(glare_pos, frame_shape):
     
-    # needs to get phone frame shape from the screen grabber and maybe keep that a consistent dimension
+    """
+    Given the glare position (x, y) and image shape, return a simple instruction
+    for how to move or tilt the phone to reduce glare. Compares the glare point
+    to the image center with a 20% tolerance zone and outputs directions such as
+    LEFT, RIGHT, UP, DOWN, or HOLD STILL.
+    """
+
 
     if glare_pos is None:
         return "No glare detected"

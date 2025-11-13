@@ -4,6 +4,16 @@ from glare_detection import detect_glare
 from screen_detection import screen_detection
 
 def camera_move():
+    
+    """
+    Continuously captures webcam frames, checks once per second whether a phone
+    screen is detected, and if so, runs glare detection on the frame. Prints
+    whether glare is present and the glare coverage score. If a GUI backend is
+    available, displays the live webcam feed and allows quitting with 'q'.
+
+    Handles both GUI and headless environments, and stops cleanly on Ctrl+C.
+    """
+ 
     cap = cv2.VideoCapture(0)
     if not cap.isOpened():
         print("Could not open webcam.")
