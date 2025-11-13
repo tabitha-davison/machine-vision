@@ -1,0 +1,3 @@
+easyocr
+cv2
+matplotlib

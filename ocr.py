@@ -1,6 +1,5 @@
 import easyocr, cv2
 
-
 def easy_ocr(easy_ocr_image):
     full_text = []
     reader = easyocr.Reader(["en"], gpu=True)

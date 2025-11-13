@@ -3,7 +3,6 @@ import time
 from glare_detection import detect_glare
 from screen_detection import screen_detection
 
-
 def camera_move():
     cap = cv2.VideoCapture(0)
     if not cap.isOpened():

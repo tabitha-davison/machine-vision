@@ -1,5 +1,3 @@
-
-
 def get_move_instruction(glare_pos, frame_shape):
     
     # needs to get phone frame shape from the screen grabber and maybe keep that a consistent dimension
