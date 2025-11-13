@@ -1,6 +1,6 @@
 from screen_detection import screen_detection
 from glare_detection import detect_glare
-from EasyOCR import easy_ocr
+from ocr import easy_ocr
 import cv2
 import time
 
