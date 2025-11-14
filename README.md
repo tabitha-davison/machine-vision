@@ -54,16 +54,18 @@ Fig 3: different maps and masks for determining glare
 
 For the glare-detection component of our screen-reader project, we used OpenCV and Numpy to build a pipeline that identifies glare by analyzing three visual “maps” of the phone screen: intensity, saturation, and local contrast. First, the image is converted to HSV so we can look at brightness and color information separately. Glare tends to be extremely bright, low in color, and low in detail, so we computed a brightness map, a saturation map, and a local-contrast map. Each of these maps highlights a different signature of glare, and by weighting and combining them, the algorithm produces a single glare-score image and a binary glare mask. From this, we can detect whether glare is present, estimate its coverage, and locate its position for giving movement instructions.
 
-Given these calculations, we output the results and our recommendations for movement instructions into the terminal, such as in Fig 5 below:
+Given these calculations, we output the results and our recommendations for movement instructions into the terminal, such as in Fig 4 below:
 
 ![Glare and Movement Recs](./assets/glare_move_terminal.png)
-Fig 5: Terminal Output with Glare and Movement Recommendation
+Fig 4: Terminal Output with Glare and Movement Recommendation
 
 As can be seen, we receive recommendations on which direction to tilt the phone in order to reduce glare, as well as a few metrics of whether there is glare or not and what the glare coverage is.
 
-In the case that our screen detection pipeline determines that there is not a screen detected, we also give this feedback in the terminal, as shown in Fig 6 below:
+In the case that our screen detection pipeline determines that there is not a screen detected, we also give this feedback in the terminal, as shown in Fig 5 below:
 
 ![No Screen Terminal](./assets/terminal_no_screen.png)
+
+Fig 5: Terminal Output with No Screen Detected
 
 ## OCR Algorithm 
 
@@ -73,10 +75,10 @@ We ultimately chose EasyOCR, since it gave the best performance on our actual us
 
 # Design Decision(s)
 
-There were multiple rounds of comparison and decisions that went into what steps in our pipeline we ended up finalizing for our screen detection. For example, as shown in the image below, we tested the effect of the denoising step for our pipeline, by comparing the edge detected when we didn’t include a bilateral filter over our image (left) versus when we used a bilateral filter (right). As can be seen, the edges of our phone screen target are picked up much more with a bilateral filter than without, which informed our decision to include a bilateral filter to remove noise and create more pronounced edges of the screen.
+There were multiple rounds of comparison and decisions that went into what steps in our pipeline we ended up finalizing for our screen detection. For example, as shown in Fig 6 below, we tested the effect of the denoising step for our pipeline, by comparing the edge detected when we didn’t include a bilateral filter over our image (left) versus when we used a bilateral filter (right). As can be seen, the edges of our phone screen target are picked up much more with a bilateral filter than without, which informed our decision to include a bilateral filter to remove noise and create more pronounced edges of the screen.
 
 ![Blur Comparison](./assets/noblur_blur.png)
-Fig 4: Left image shows processing without bilateral filtering. Right shows it with
+Fig 6: Left image shows processing without bilateral filtering. Right shows it with bilateral filtering.
 
 Additionally, with our choice of denoising filter, we decided to go with a bilateral filter specifically because it fits our use case of picking out edges in the following step. While OpenCV also has options such as a simple averaging box filter, Gaussian filter, and a median averaging filter, we chose the bilateral filter because of the way it only averages pixels that are both close spatially and in color intensity to central pixels of the kernel, which ends up smoothing images within regions while preserving edges more effectively than other types of filtering.
 
