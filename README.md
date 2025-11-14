@@ -54,6 +54,17 @@ Fig 3: different maps and masks for determining glare
 
 For the glare-detection component of our screen-reader project, we used OpenCV and Numpy to build a pipeline that identifies glare by analyzing three visual “maps” of the phone screen: intensity, saturation, and local contrast. First, the image is converted to HSV so we can look at brightness and color information separately. Glare tends to be extremely bright, low in color, and low in detail, so we computed a brightness map, a saturation map, and a local-contrast map. Each of these maps highlights a different signature of glare, and by weighting and combining them, the algorithm produces a single glare-score image and a binary glare mask. From this, we can detect whether glare is present, estimate its coverage, and locate its position for giving movement instructions.
 
+Given these calculations, we output the results and our recommendations for movement instructions into the terminal, such as in Fig 5 below:
+
+![Glare and Movement Recs](./assets/glare_move_terminal.png)
+Fig 5: Terminal Output with Glare and Movement Recommendation
+
+As can be seen, we receive recommendations on which direction to tilt the phone in order to reduce glare, as well as a few metrics of whether there is glare or not and what the glare coverage is.
+
+In the case that our screen detection pipeline determines that there is not a screen detected, we also give this feedback in the terminal, as shown in Fig 6 below:
+
+![No Screen Terminal](./assets/terminal_no_screen.png)
+
 ## OCR Algorithm 
 
 We had to choose which OCR library to build our screen-reader pipeline around, and compared EasyOCR, Tesseract, and PaddleOCR before deciding on EasyOCR.
@@ -83,7 +94,7 @@ If we had more time, we would also try to get the screen reader to work on not o
 
 Additionally, given more time, we would clean up our output.txt, as currently our OCR will output each chunk it processes onto a separate line.
 
-## Future Programming & Project Learnings
+# Future Programming & Project Learnings
 
 We learned a lot about how to structure a more complex robotics pipeline and the importance of testing each stage as we built it. Iterating from static screenshots, to photos of a phone screen, and finally to a live video feed made the development process much smoother and helped us catch issues early.
 We also gained a deeper understanding of optical character recognition (OCR) and the tradeoffs between different OCR methods. That knowledge is widely applicable to many real-world perception problems - everything from autonomous vehicles reading road signs to systems that analyse handwriting or extract information from the environment.
@@ -95,3 +106,11 @@ https://drive.google.com/file/d/1NLBEL2s62fnqZY55xzfMGWQuipZx1qxW/view?usp=shari
 
 Full Live Pipeline with OCR Output:
 https://drive.google.com/file/d/1ITCo3i7tZEk4x0AQhQZhDCCxjOTwvPuJ/view?usp=share_link 
+
+# Running Our Project
+
+To run our project, the libraries outside in the requirements.txt file (numpy, cv2, easyocr) are needed. Though `pip install -r requirements.txt` may be run to install these libraries, this .txt file is mostly there for easy dependency reference, as we each installed these dependencies in different ways (conda, pip, etc.).
+
+To run the live feed pipeline, run the file `live_screen_reader.py` with `python live_screen_reader.py`, which should connect to the webcam on your computer. Or, if running on a Macbook and having an iPhone, enable the share webcam feature with your iPhone to use your iPhone as the first-person camera, which is the approach we took to test and conduct our demo. The detected and cropped phone screen image should go to a generated directory `saved_images` under the name `detected_screen.jpg`, while the output of the OCR detection will be in generated `output.txt`.
+
+To run the still image pipeline, run the file `still_image_screen_reader.py` with `python still_image_screen_reader.py`, and change the path to the desired still image. 
