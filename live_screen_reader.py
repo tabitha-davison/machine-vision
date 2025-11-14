@@ -6,6 +6,18 @@ import time
 
 # in loop, get screen then read
 def live_loop():
+    """
+    A function that runs the live feed pipeline when this file is run as a script.
+    Using OpenCV, the webcam is captured for the first person camera view, and
+    every 1 second, the screen detection, glare detection, and OCR features are run if
+    a phone screen is detected.
+
+    Args:
+        None:
+
+    Returns:
+        None
+    """
     cap = cv2.VideoCapture(0)
     if not cap.isOpened():
         print("Could not open webcam.")
