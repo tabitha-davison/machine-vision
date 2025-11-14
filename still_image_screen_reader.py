@@ -1,5 +1,5 @@
 from screen_detection import screen_detection
-from EasyOCR import easy_ocr
+from ocr import easy_ocr
 import cv2
 
 image = cv2.imread("phone_image_example.jpg")
