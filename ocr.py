@@ -1,6 +1,12 @@
 import easyocr, cv2
 
 def easy_ocr(easy_ocr_image):
+    """
+    A function that uses the EasyOCR library to detect text from an image.
+
+    Returns:
+        full_text: a list representing the chunks of words OCR has captured.
+    """
     full_text = []
     reader = easyocr.Reader(["en"], gpu=True)
     easy_ocr_result = reader.readtext(easy_ocr_image, detail=1, paragraph=False)
